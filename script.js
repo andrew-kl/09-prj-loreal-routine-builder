@@ -4,8 +4,8 @@ const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
 
-/* Store selected products in an array for sending to OpenAI API later */
-let selProdsArr = [];
+/* Keep track of selected products to update checkboxes and send data to OpenAI */
+let selectedProducts = [];
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -28,12 +28,12 @@ function displayProducts(products) {
       (product, idx) => `
       <div class="product-card">
         <!-- Checkbox in the top left corner -->
-        <input type="checkbox" class="product-checkbox" id="product-check-${idx}" aria-label="Select product" onchange="cardCheckboxUpdate(this)">
+        <input type="checkbox" class="product-checkbox" id="product-check-${idx}" aria-label="Select product" onchange="toggleCardSelection(this)">
         <!-- Info (i) button in the top right corner -->
         <button class="info-btn" aria-label="More about product">&#9432;</button>
         <img src="${product.image}" alt="${product.name}">
         <div class="product-info">
-          <h3>${product.name}</h3>
+          <h3 id="${product.id}">${product.name}</h3>
           <p>${product.brand}</p>
         </div>
       </div>
@@ -41,34 +41,45 @@ function displayProducts(products) {
     )
     .join("");
 
-  /* Retain checked products after filtering */
-  const checkboxes = productsContainer.querySelectorAll(".product-checkbox");
-  checkboxes.forEach((checkbox, idx) => {
-    const product = products[idx];
-    if (
-      selProdsArr.some(
-        (p) => p.querySelector(".product-info h3").textContent === product.name,
-      )
-    ) {
+  // Check checboxes and apply highlight and border for displayed product cards correlating to products in the selectedProducts array.
+  displaySelectedProducts();
+}
+
+/* Check the displayed product cards against the selected products array. Apply styling and checkbox state to matches. */
+function displaySelectedProducts() {
+  const productCards = document.querySelectorAll(".product-card");
+
+  productCards.forEach((card) => {
+    const productId = card.querySelector(".product-info h3").id;
+    const checkbox = card.querySelector(".product-checkbox");
+
+    if (selectedProducts.some((p) => p.id === productId)) {
+      card.classList.add("selected");
       checkbox.checked = true;
-      checkbox.closest(".product-card").classList.add("selected");
+    } else {
+      card.classList.remove("selected");
+      checkbox.checked = false;
     }
   });
 }
 
 /* Add and remove selected products when checkbox is toggled */
-function cardCheckboxUpdate(e) {
-  const selProdsDOM = document.getElementById("selectedProductsList");
-
+function toggleCardSelection(e) {
   const card = e.closest(".product-card");
-  if (e.checked) {
-    card.classList.add("selected");
-    selProdsArr.push(card);
 
-    // Create a wide version of the card for the selected products list
+  if (e.checked) {
+    // Apply styling to checked card (highlight, border)
+    card.classList.add("selected");
+
+    // Add checked card's product's id to the selectedProducts array
+    selectedProducts.push({
+      id: card.querySelector(".product-info h3").id, // Get the rest from productsJson
+    });
+
+    // Add the selected product to the "selected products" list on the webpage
     const selectedCard = document.createElement("div");
     selectedCard.classList.add("selected-product-card");
-
+    selectedCard.id = `${card.querySelector(".product-info h3").id}`;
     selectedCard.style.width = "100%";
     selectedCard.style.border = "2px solid";
     selectedCard.style.padding = "5px";
@@ -76,32 +87,34 @@ function cardCheckboxUpdate(e) {
       <button class="remove-btn" aria-label="Remove product">&times;</button>
       <span>${card.querySelector(".product-info h3").textContent + " | " + card.querySelector(".product-info p").textContent}</span>
     `;
+    document.getElementById("selectedProductsList").appendChild(selectedCard);
 
-    // Add event listener to the remove button to uncheck the original card and remove this card
+    // Remove the product from both the selectedProducts array and the "selected products" list on the webpage when the remove button is clicked
     selectedCard.querySelector(".remove-btn").addEventListener("click", () => {
-      e.checked = false;
-      card.classList.remove("selected");
-      selProdsDOM.removeChild(selectedCard);
-    });
+      // Remove from selectedProducts array
+      selectedProducts = selectedProducts.filter(
+        (p) => p.id !== card.querySelector(".product-info h3").id,
+      );
 
-    selProdsDOM.appendChild(selectedCard);
+      // Remove the card from the selected products list
+      selectedCard.remove();
+
+      // Update product list styling and checkbox state
+      displaySelectedProducts();
+    });
   } else {
     card.classList.remove("selected");
-    selProdsArr = selProdsArr.filter((p) => p !== card);
+    selectedProducts = selectedProducts.filter(
+      (p) => p.id !== card.querySelector(".product-info h3").id,
+    );
 
     // Remove the corresponding card from the selected products list
-    const selectedCards = selProdsDOM.querySelectorAll(
-      ".selected-product-card",
+    const selectedCard = document.querySelector(
+      `.selected-product-card[id="${card.querySelector(".product-info h3").id}"]`,
     );
-    selectedCards.forEach((selectedCard) => {
-      if (
-        selectedCard.textContent.includes(
-          card.querySelector(".product-info h3").textContent,
-        )
-      ) {
-        selProdsDOM.removeChild(selectedCard);
-      }
-    });
+    if (selectedCard) {
+      selectedCard.remove();
+    }
   }
 }
 
