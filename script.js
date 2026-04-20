@@ -4,6 +4,9 @@ const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
 
+/* Store all products loaded from the JSON file in a variable to avoid fetching multiple times */
+let allProductsJson;
+
 /* Keep track of selected products to update checkboxes and send data to OpenAI */
 let selectedProducts = [];
 
@@ -20,6 +23,9 @@ async function loadProducts() {
   const data = await response.json();
   return data.products;
 }
+loadProducts().then((data) => {
+  allProductsJson = data;
+});
 
 /* Create HTML for displaying product cards */
 function displayProducts(products) {
@@ -30,7 +36,7 @@ function displayProducts(products) {
         <!-- Checkbox in the top left corner -->
         <input type="checkbox" class="product-checkbox" id="product-check-${idx}" aria-label="Select product" onchange="toggleCardSelection(this)">
         <!-- Info (i) button in the top right corner -->
-        <button class="info-btn" aria-label="More about product">&#9432;</button>
+        <button class="info-btn" data-product-id="${product.id}" aria-label="More about product">&#9432;</button>
         <img src="${product.image}" alt="${product.name}">
         <div class="product-info">
           <h3 id="${product.id}">${product.name}</h3>
@@ -41,9 +47,50 @@ function displayProducts(products) {
     )
     .join("");
 
+  // Adding info-button event listeners after the product cards are rendered
+  document.querySelectorAll(".info-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const productId = btn.getAttribute("data-product-id");
+      const product = allProductsJson.find(
+        (p) => String(p.id) === String(productId),
+      );
+      if (product) {
+        showProductModal(product);
+      }
+    });
+  });
+
   // Check checboxes and apply highlight and border for displayed product cards correlating to products in the selectedProducts array.
   displaySelectedProducts();
 }
+
+// Function for showing product details in a modal when the info button is clicked
+function showProductModal(product) {
+  const modal = document.getElementById("productModal");
+  const modalContent = document.getElementById("modalProductContent");
+  modalContent.innerHTML = `
+    <img src="${product.image}" alt="${product.name}">
+    <h3>${product.name}</h3>
+    <p><strong>Brand:</strong> ${product.brand}</p>
+    <p><strong>Category:</strong> ${product.category}</p>
+    <p>${product.description}</p>
+  `;
+  modal.style.display = "block";
+}
+
+// Closing the modal when the close button is clicked or when clicking outside the modal content
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("productModal");
+  const closeBtn = document.getElementById("closeModalBtn");
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+});
 
 /* Check the displayed product cards against the selected products array. Apply styling and checkbox state to matches. */
 function displaySelectedProducts() {
@@ -120,13 +167,11 @@ function toggleCardSelection(e) {
 
 /* Filter and display products when category changes */
 categoryFilter.addEventListener("change", async (e) => {
-  /* TODO: Add loading animation */
-  const products = await loadProducts();
   const selectedCategory = e.target.value;
 
   /* filter() creates a new array containing only products 
      where the category matches what the user selected */
-  const filteredProducts = products.filter(
+  const filteredProducts = allProductsJson.filter(
     (product) => product.category === selectedCategory,
   );
 
