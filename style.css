@@ -186,6 +186,39 @@ body {
   display: flex;
   gap: 15px;
   min-height: 160px;
+  position: relative;
+}
+
+.product-card.selected {
+  border: 2px solid #000;
+  background-color: #e3a53540;
+}
+
+/* Info (i) button */
+.info-btn {
+  position: absolute;
+  right: 10px;
+  top: 5px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 2;
+  color: #333;
+  padding: 0;
+}
+.info-btn:hover {
+  color: #000;
+}
+
+/* Checkbox */
+.product-checkbox {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
 }
 
 .product-card img {
