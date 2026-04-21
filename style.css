@@ -8,7 +8,7 @@
   width: 100vw;
   height: 100vh;
   overflow: auto;
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content {
@@ -20,7 +20,7 @@
   max-width: 400px;
   border-radius: 10px;
   position: relative;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
 }
 
 .close {
@@ -319,6 +319,58 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* Selected product card improvements */
+.selected-product-card {
+  background: #fffbe8;
+  border: 2px solid #e3a535;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(227, 165, 53, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  font-size: 15px;
+  position: relative;
+  min-width: 0;
+  flex: 1 1 100%;
+  transition: box-shadow 0.2s;
+}
+.selected-product-card .remove-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  font-size: 22px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: color 0.2s;
+}
+.selected-product-card .remove-btn:hover:not(:disabled) {
+  color: #b71c1c;
+}
+
+/* Disabled button styles */
+button:disabled,
+.selected-product-card .remove-btn:disabled,
+.info-btn:disabled,
+.generate-btn:disabled {
+  opacity: 0.5;
+  cursor: default !important;
+  pointer-events: none;
+  filter: grayscale(0.7);
+}
+.selected-product-card .remove-btn:disabled,
+.info-btn:disabled,
+.generate-btn:disabled {
+  color: #aaa !important;
+}
+.selected-product-card .remove-btn:disabled:hover,
+.info-btn:disabled:hover,
+.generate-btn:disabled:hover {
+  background: none;
+  color: #aaa !important;
 }
 
 .generate-btn {
