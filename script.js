@@ -8,7 +8,13 @@ const chatWindow = document.getElementById("chatWindow");
 const workerUrl = "https://gca-loreal-worker.andrewkalazin.workers.dev/";
 
 /* Messages array for storing system prompt and conversation history */
-let conversation = [];
+let conversation = [
+  {
+    role: "system",
+    content:
+      "You are a L’Oréal Smart Routine & Product Advisor. Your job is to generate personalized beauty (skincare, haircare, makeup, fragrance, etc.) routines based on user-selected L’Oréal products. You should also answer follow-up questions for those routines/products. When generating beauty routines, only use L’Oréal products selected by the user. You may suggest additional products at the end if you think they complement the routine. Politely refuse and redirect if the user asks about unrelated topics (including non-L’Oréal brands and products) or non-beauty subjects. Do not recommend non–L’Oréal brands; suggest L’Oréal alternatives instead. Keep responses short, practical, and routine-focused. Do not invent product details or guarantee results.",
+  },
+];
 
 /* Store all products loaded from the JSON file in a variable to avoid fetching multiple times */
 let allProductsJson;
@@ -196,6 +202,7 @@ document
     chatWindow.innerHTML =
       "Generating your beauty routine based on selected products...";
     document.getElementById("generateRoutine").disabled = true;
+    document.getElementById("sendBtn").disabled = true;
 
     // Reset conversation array when generating a new routine
     conversation = [
@@ -258,11 +265,54 @@ document
       .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 
     document.getElementById("generateRoutine").disabled = false;
+    document.getElementById("sendBtn").disabled = false;
   });
 
 /* Chat form submission handler - placeholder for OpenAI integration */
-chatForm.addEventListener("submit", (e) => {
+chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  document.getElementById("generateRoutine").disabled = true;
+  document.getElementById("sendBtn").disabled = true;
 
-  chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
+  // Store user input in conversation array
+  const userMessage = document.getElementById("userInput").value.trim();
+  if (userMessage) conversation.push({ role: "user", content: userMessage });
+
+  chatWindow.innerHTML += `<br><br><b>You:</b> ${userMessage}`;
+  document.getElementById("userInput").value =
+    "Waiting for assistant response...";
+  document.getElementById("userInput").disabled = true;
+
+  const response = await fetch(workerUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4.0",
+      messages: conversation,
+    }),
+  });
+
+  // Throw an error if the response is not 200
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`);
+  }
+
+  // Parse Cloudflare Worker JSON response
+  const result = await response.json();
+  const assistantMsg = result.choices[0].message.content;
+
+  // Store assistant response in conversation array
+  conversation.push({ role: "assistant", content: assistantMsg });
+
+  // Display user prompt & assistant response in chat window
+  chatWindow.innerHTML += `<br><br><b>Assistant:</b> ${assistantMsg}`
+    .replace(/\n/g, "<br>")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+
+  document.getElementById("generateRoutine").disabled = false;
+  document.getElementById("sendBtn").disabled = false;
+  document.getElementById("userInput").value = "";
+  document.getElementById("userInput").disabled = false;
 });
