@@ -20,7 +20,8 @@ let conversation = [
 let allProductsJson;
 
 /* Keep track of selected products to update checkboxes and send data to OpenAI */
-let selectedProducts = [];
+let selectedProducts =
+  JSON.parse(localStorage.getItem("selectedProducts")) || [];
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -37,6 +38,46 @@ async function loadProducts() {
 }
 loadProducts().then((data) => {
   allProductsJson = data;
+
+  /* Add cards to the 'selected products' section for saved selected products in localStorage on page load */
+  selectedProducts.forEach((p) => {
+    const productDetails = allProductsJson.find(
+      (prod) => String(prod.id) === String(p.id),
+    );
+    if (productDetails) {
+      const selectedCard = document.createElement("div");
+      selectedCard.classList.add("selected-product-card");
+      selectedCard.id = `${productDetails.id}`;
+      selectedCard.style.width = "100%";
+      selectedCard.style.border = "2px solid";
+      selectedCard.style.padding = "5px";
+      selectedCard.innerHTML = `
+        <button class="remove-btn" aria-label="Remove product">&times;</button>
+        <span>${productDetails.name + " | " + productDetails.brand}</span>
+      `;
+      document.getElementById("selectedProductsList").appendChild(selectedCard);
+
+      // Remove the product from both the selectedProducts array and the "selected products" list on the webpage when the remove button is clicked
+      selectedCard
+        .querySelector(".remove-btn")
+        .addEventListener("click", () => {
+          // Remove from selectedProducts array
+          selectedProducts = selectedProducts.filter(
+            (prod) => String(prod.id) !== String(productDetails.id),
+          );
+
+          localStorage.setItem(
+            "selectedProducts",
+            JSON.stringify(selectedProducts),
+          ); // Save to localStorage whenever a product is added
+          // Remove the card from the selected products list
+          selectedCard.remove();
+
+          // Update product list styling and checkbox state
+          displaySelectedProducts();
+        });
+    }
+  });
 });
 
 /* Filter and display products when category changes */
@@ -148,6 +189,8 @@ function toggleCardSelection(e) {
       id: card.querySelector(".product-info h3").id, // Get the rest from productsJson
     });
 
+    localStorage.setItem("selectedProducts", JSON.stringify(selectedProducts)); // Save to localStorage whenever a product is added
+
     // Add the selected product to the "selected products" list on the webpage
     const selectedCard = document.createElement("div");
     selectedCard.classList.add("selected-product-card");
@@ -168,6 +211,11 @@ function toggleCardSelection(e) {
         (p) => p.id !== card.querySelector(".product-info h3").id,
       );
 
+      localStorage.setItem(
+        "selectedProducts",
+        JSON.stringify(selectedProducts),
+      ); // Save to localStorage whenever a product is added
+
       // Remove the card from the selected products list
       selectedCard.remove();
 
@@ -179,6 +227,8 @@ function toggleCardSelection(e) {
     selectedProducts = selectedProducts.filter(
       (p) => p.id !== card.querySelector(".product-info h3").id,
     );
+
+    localStorage.setItem("selectedProducts", JSON.stringify(selectedProducts)); // Save to localStorage whenever a product is added
 
     // Remove the corresponding card from the selected products list
     const selectedCard = document.querySelector(
