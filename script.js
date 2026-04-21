@@ -336,7 +336,8 @@ document
     // Display user prompt & assistant response in chat window
     chatWindow.innerHTML = assistantMsg
       .replace(/\n/g, "<br>")
-      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2">$1</a>');
 
     document.getElementById("generateRoutine").disabled = false;
     document.getElementById("sendBtn").disabled = false;
@@ -352,7 +353,7 @@ chatForm.addEventListener("submit", async (e) => {
   const userMessage = document.getElementById("userInput").value.trim();
   if (userMessage) conversation.push({ role: "user", content: userMessage });
 
-  chatWindow.innerHTML += `<br><br><b>You:</b> ${userMessage}`;
+  chatWindow.innerHTML += `<br><br><h3>You:</h3> ${userMessage}`;
   document.getElementById("userInput").value =
     "Waiting for assistant response...";
   document.getElementById("userInput").disabled = true;
@@ -381,9 +382,10 @@ chatForm.addEventListener("submit", async (e) => {
   conversation.push({ role: "assistant", content: assistantMsg });
 
   // Display user prompt & assistant response in chat window
-  chatWindow.innerHTML += `<br><br><b>Assistant:</b> ${assistantMsg}`
+  chatWindow.innerHTML += `<br><br><h3>Assistant:</h3> ${assistantMsg}`
     .replace(/\n/g, "<br>")
-    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2">$1</a>');
 
   document.getElementById("generateRoutine").disabled = false;
   document.getElementById("sendBtn").disabled = false;
