@@ -3,6 +3,14 @@ const categoryFilter = document.getElementById("categoryFilter");
 const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
+const productSearch = document.getElementById("productSearch");
+const clearCategoryBtn = document.getElementById("clearCategoryBtn");
+if (clearCategoryBtn && categoryFilter) {
+  clearCategoryBtn.addEventListener("click", () => {
+    categoryFilter.selectedIndex = 0;
+    filterAndDisplayProducts();
+  });
+}
 
 /* Cloudflare Worker URL */
 const workerUrl = "https://gca-loreal-worker.andrewkalazin.workers.dev/";
@@ -81,17 +89,33 @@ loadProducts().then((data) => {
 });
 
 /* Filter and display products when category changes */
-categoryFilter.addEventListener("change", async (e) => {
-  const selectedCategory = e.target.value;
+async function filterAndDisplayProducts() {
+  const products = await loadProducts();
+  const selectedCategory = categoryFilter.value;
+  const searchTerm = productSearch.value.trim().toLowerCase();
 
-  /* filter() creates a new array containing only products 
-     where the category matches what the user selected */
-  const filteredProducts = allProductsJson.filter(
-    (product) => product.category === selectedCategory,
-  );
+  let filtered = products;
+  if (selectedCategory) {
+    filtered = filtered.filter(
+      (product) => product.category === selectedCategory,
+    );
+  }
+  if (searchTerm) {
+    filtered = filtered.filter(
+      (product) =>
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.brand.toLowerCase().includes(searchTerm) ||
+        (product.description &&
+          product.description.toLowerCase().includes(searchTerm)),
+    );
+  }
+  displayProducts(filtered);
+}
 
-  displayProducts(filteredProducts);
-});
+categoryFilter.addEventListener("change", filterAndDisplayProducts);
+if (productSearch) {
+  productSearch.addEventListener("input", filterAndDisplayProducts);
+}
 
 /* Create HTML for displaying product cards */
 function displayProducts(products) {
